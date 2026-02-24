@@ -1972,7 +1972,9 @@ function saveGasUrl() {
 async function syncFromGas() {
   if (!gasUrl) return;
   try {
-    const res = await fetch(gasUrl + '?action=getAll');
+    // GASはCORSの制限があるためiframeリダイレクト経由で取得
+    const url = gasUrl + '?action=getAll';
+    const res = await fetch(url, { redirect: 'follow' });
     const data = await res.json();
     if (data.contacts) db.contacts = data.contacts;
     if (data.deals) db.deals = data.deals;
@@ -1988,8 +1990,10 @@ async function syncFromGas() {
 async function syncToGas(sheet, record) {
   if (!gasUrl) return;
   try {
-    await fetch(gasUrl, {
+    // no-corsで送信（レスポンスは読めないがGAS側で処理される）
+    fetch(gasUrl, {
       method: 'POST',
+      mode: 'no-cors',
       body: JSON.stringify({ sheet, record }),
       headers: { 'Content-Type': 'text/plain' }
     });
@@ -2001,7 +2005,6 @@ async function syncToGas(sheet, record) {
 // ============================================================
 function setGasCodeDisplay() {
   const code = `// CRM Pro - GAS バックエンド
-// スプレッドシートに「Contacts」「Deals」「Tasks」「Activities」シートを作成してください
 
 const SHEETS = ['Contacts', 'Deals', 'Tasks', 'Activities'];
 const HEADERS = {
@@ -2011,41 +2014,52 @@ const HEADERS = {
   Activities: ['id','type','contactId','content','date','owner','createdAt']
 };
 
+const ALLOWED_ORIGIN = 'https://nw-komuro.github.io';
+
 function doGet(e) {
   const action = e.parameter.action;
+  let result;
   if (action === 'getAll') {
-    const result = {};
+    result = {};
     SHEETS.forEach(name => {
       result[name.toLowerCase()] = getSheetData(name);
     });
-    return json(result);
+  } else {
+    result = { error: 'unknown action' };
   }
-  return json({ error: 'unknown action' });
+  return ContentService.createTextOutput(JSON.stringify(result))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 function doPost(e) {
-  const body = JSON.parse(e.postData.contents);
-  const sheetName = capitalize(body.sheet);
-  const record = body.record;
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
-  if (!sheet) return json({ error: 'sheet not found' });
-
-  const headers = HEADERS[sheetName];
-  const existing = getSheetData(sheetName);
-  const idx = existing.findIndex(r => r.id === record.id);
-
-  if (idx >= 0) {
-    // Update
-    const row = idx + 2;
-    headers.forEach((h, i) => {
-      sheet.getRange(row, i + 1).setValue(record[h] !== undefined ? record[h] : '');
-    });
-  } else {
-    // Insert
-    const row = headers.map(h => record[h] !== undefined ? record[h] : '');
-    sheet.appendRow(row);
+  try {
+    const body = JSON.parse(e.postData.contents);
+    const sheetName = capitalize(body.sheet);
+    const record = body.record;
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName(sheetName);
+    if (!sheet) {
+      sheet = ss.insertSheet(sheetName);
+      sheet.appendRow(HEADERS[sheetName]);
+    }
+    const headers = HEADERS[sheetName];
+    const existing = getSheetData(sheetName);
+    const idx = existing.findIndex(r => r.id === record.id);
+    if (idx >= 0) {
+      const row = idx + 2;
+      headers.forEach((h, i) => {
+        sheet.getRange(row, i + 1).setValue(record[h] !== undefined ? String(record[h]) : '');
+      });
+    } else {
+      const row = headers.map(h => record[h] !== undefined ? String(record[h]) : '');
+      sheet.appendRow(row);
+    }
+    return ContentService.createTextOutput(JSON.stringify({ result: 'ok' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch(err) {
+    return ContentService.createTextOutput(JSON.stringify({ error: err.message }))
+      .setMimeType(ContentService.MimeType.JSON);
   }
-  return json({ result: 'ok' });
 }
 
 function getSheetData(name) {
@@ -2064,11 +2078,6 @@ function getSheetData(name) {
     headers.forEach((h, i) => obj[h] = row[i]);
     return obj;
   });
-}
-
-function json(obj) {
-  return ContentService.createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
 }
 
 function capitalize(s) {
