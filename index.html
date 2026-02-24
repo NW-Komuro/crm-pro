@@ -715,8 +715,9 @@
 
   @media (max-width: 640px) {
     .sidebar { display: none; }
+    .topbar { display: none; }
     .mobile-nav { display: flex; }
-    .content { padding: 12px 12px 68px; }
+    .content { padding: 16px 12px 72px; padding-top: calc(16px + env(safe-area-inset-top)); }
     th.hide-mobile, td.hide-mobile { display: none; }
     .form-row { grid-template-columns: 1fr; }
   }
