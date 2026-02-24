@@ -114,6 +114,8 @@
     overflow: hidden;
     height: 100vh;
     min-width: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .topbar {
@@ -123,10 +125,11 @@
     display: flex;
     align-items: center;
     padding: 0 20px;
-    padding-top: env(safe-area-inset-top);
-    height: calc(56px + env(safe-area-inset-top));
     gap: 12px;
     flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 50;
   }
 
   .topbar h1 { font-size: 16px; font-weight: 600; flex: 1; }
@@ -715,9 +718,18 @@
 
   @media (max-width: 640px) {
     .sidebar { display: none; }
-    .topbar { display: none; }
+    .topbar {
+      display: flex;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      height: auto;
+      min-height: 50px;
+      padding-top: max(12px, env(safe-area-inset-top));
+      padding-bottom: 12px;
+    }
     .mobile-nav { display: flex; }
-    .content { padding: 16px 12px 72px; padding-top: calc(16px + env(safe-area-inset-top)); }
+    .content { padding: 12px 12px 72px; }
     th.hide-mobile, td.hide-mobile { display: none; }
     .form-row { grid-template-columns: 1fr; }
   }
