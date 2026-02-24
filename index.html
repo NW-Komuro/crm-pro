@@ -1,0 +1,2048 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>CRM Pro</title>
+<link rel="manifest" href="manifest.json">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0f1e;
+    --bg2: #111827;
+    --bg3: #1e293b;
+    --border: rgba(255,255,255,0.07);
+    --text: #f1f5f9;
+    --text2: #94a3b8;
+    --text3: #475569;
+    --accent: #6366f1;
+    --accent2: #818cf8;
+    --green: #10b981;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --purple: #a855f7;
+    --radius: 12px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* ===== SIDEBAR ===== */
+  .sidebar {
+    width: 64px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 0;
+    gap: 4px;
+    flex-shrink: 0;
+    z-index: 100;
+  }
+
+  .sidebar-logo {
+    width: 38px;
+    height: 38px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    margin-bottom: 16px;
+  }
+
+  .nav-item {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text3);
+    font-size: 20px;
+    transition: all 0.15s;
+    position: relative;
+  }
+
+  .nav-item:hover { background: var(--bg3); color: var(--text2); }
+  .nav-item.active { background: rgba(99,102,241,0.15); color: var(--accent2); }
+
+  .nav-item .tooltip {
+    position: absolute;
+    left: 52px;
+    background: var(--bg3);
+    color: var(--text);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    border: 1px solid var(--border);
+  }
+
+  .nav-item:hover .tooltip { opacity: 1; }
+
+  /* ===== MAIN ===== */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .topbar {
+    height: 56px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  .topbar h1 { font-size: 16px; font-weight: 600; flex: 1; }
+
+  .btn {
+    padding: 7px 14px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--bg3); }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+  .btn-danger { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+  }
+
+  /* ===== PAGES ===== */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ===== DASHBOARD ===== */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+
+  .stat-label { font-size: 12px; color: var(--text3); margin-bottom: 6px; }
+  .stat-value { font-size: 28px; font-weight: 600; font-family: 'DM Mono', monospace; }
+  .stat-sub { font-size: 12px; color: var(--text3); margin-top: 4px; }
+  .stat-green { color: var(--green); }
+  .stat-yellow { color: var(--yellow); }
+  .stat-blue { color: var(--blue); }
+  .stat-purple { color: var(--purple); }
+
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 768px) {
+    .dashboard-grid { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text2);
+    margin-bottom: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Funnel */
+  .funnel { display: flex; flex-direction: column; gap: 8px; }
+  .funnel-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+  }
+  .funnel-bar-wrap {
+    flex: 1;
+    height: 20px;
+    background: var(--bg3);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .funnel-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s ease;
+  }
+  .funnel-label { width: 80px; color: var(--text2); }
+  .funnel-count { width: 30px; text-align: right; color: var(--text3); font-family: 'DM Mono', monospace; font-size: 12px; }
+
+  /* Task list */
+  .task-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .task-item:last-child { border-bottom: none; }
+  .task-check {
+    width: 16px; height: 16px;
+    border-radius: 4px;
+    border: 1.5px solid var(--text3);
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    color: transparent;
+    transition: all 0.15s;
+  }
+  .task-check.done { background: var(--green); border-color: var(--green); color: white; }
+  .task-text { flex: 1; }
+  .task-text.done { text-decoration: line-through; color: var(--text3); }
+  .task-due { font-size: 11px; color: var(--text3); }
+  .task-due.overdue { color: var(--red); }
+
+  /* Activity feed */
+  .activity-item {
+    display: flex;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .activity-item:last-child { border-bottom: none; }
+  .activity-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-top: 4px;
+    flex-shrink: 0;
+  }
+  .activity-text { color: var(--text2); line-height: 1.5; }
+  .activity-time { color: var(--text3); margin-top: 2px; }
+
+  /* ===== TABLE ===== */
+  .search-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+    align-items: center;
+  }
+
+  .search-input {
+    flex: 1;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .search-input::placeholder { color: var(--text3); }
+
+  .filter-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 14px;
+    background: var(--bg3);
+    padding: 3px;
+    border-radius: 8px;
+    width: fit-content;
+  }
+
+  .filter-tab {
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    color: var(--text3);
+    transition: all 0.15s;
+  }
+  .filter-tab.active { background: var(--bg2); color: var(--text); }
+
+  .table-wrap {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+  }
+  td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text2);
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .badge-blue { background: rgba(59,130,246,0.15); color: var(--blue); }
+  .badge-green { background: rgba(16,185,129,0.15); color: var(--green); }
+  .badge-yellow { background: rgba(245,158,11,0.15); color: var(--yellow); }
+  .badge-red { background: rgba(239,68,68,0.15); color: var(--red); }
+  .badge-purple { background: rgba(168,85,247,0.15); color: var(--purple); }
+  .badge-gray { background: rgba(148,163,184,0.1); color: var(--text3); }
+
+  .link-text { color: var(--accent2); cursor: pointer; }
+  .link-text:hover { text-decoration: underline; }
+
+  /* ===== KANBAN ===== */
+  .kanban {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 12px;
+  }
+
+  .kanban-col {
+    min-width: 220px;
+    max-width: 220px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    flex-shrink: 0;
+  }
+
+  .kanban-col-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text2);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .kanban-col-count {
+    background: var(--bg3);
+    color: var(--text3);
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .deal-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .deal-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .deal-name { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+  .deal-customer { font-size: 11px; color: var(--text3); margin-bottom: 6px; }
+  .deal-amount { font-size: 14px; font-weight: 600; font-family: 'DM Mono', monospace; color: var(--text); }
+  .deal-meta { display: flex; justify-content: space-between; margin-top: 6px; font-size: 11px; color: var(--text3); }
+
+  /* ===== MODAL ===== */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.show { display: flex; }
+
+  .modal {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    width: 90%;
+    max-width: 480px;
+    max-height: 85vh;
+    overflow-y: auto;
+    animation: slideUp 0.2s ease;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .modal-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .modal-close {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    background: var(--bg3);
+    border: none;
+    color: var(--text3);
+    cursor: pointer;
+    font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .modal-close:hover { color: var(--text); }
+
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 12px; color: var(--text3); margin-bottom: 5px; display: block; }
+
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+  .form-textarea { resize: vertical; min-height: 80px; }
+  .form-select option { background: var(--bg2); }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+  /* ===== DETAIL PANEL ===== */
+  .detail-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    z-index: 900;
+  }
+  .detail-overlay.show { display: block; }
+
+  .detail-panel {
+    position: fixed;
+    top: 0; right: 0; bottom: 0;
+    width: min(480px, 100%);
+    background: var(--bg2);
+    border-left: 1px solid var(--border);
+    overflow-y: auto;
+    animation: slideIn 0.2s ease;
+    z-index: 901;
+  }
+
+  @keyframes slideIn {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+  }
+
+  .detail-bg {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.3);
+    backdrop-filter: blur(2px);
+    z-index: 900;
+  }
+
+  .detail-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .detail-avatar {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .detail-name { font-size: 16px; font-weight: 600; }
+  .detail-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .detail-close { margin-left: auto; }
+
+  .detail-body { padding: 16px 20px; }
+  .detail-section { margin-bottom: 20px; }
+  .detail-section-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 10px;
+  }
+  .detail-field { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; border-bottom: 1px solid var(--border); }
+  .detail-field:last-child { border-bottom: none; }
+  .detail-field-label { color: var(--text3); }
+  .detail-field-value { color: var(--text); text-align: right; }
+
+  /* ===== EMPTY STATE ===== */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text3);
+  }
+  .empty-state .emoji { font-size: 40px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  /* ===== LOGIN SCREEN ===== */
+  #login-screen {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+  #login-screen.show { display: flex; }
+
+  .login-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px;
+    width: 90%;
+    max-width: 360px;
+    text-align: center;
+    animation: slideUp 0.3s ease;
+  }
+
+  .login-logo {
+    width: 56px; height: 56px;
+    background: var(--accent);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    margin: 0 auto 20px;
+  }
+
+  .login-title { font-size: 22px; font-weight: 600; margin-bottom: 6px; }
+  .login-sub { font-size: 13px; color: var(--text3); margin-bottom: 28px; }
+
+  .login-error {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--red);
+    margin-top: 14px;
+    display: none;
+  }
+
+  .login-domain-info {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 16px;
+    padding: 8px;
+    background: var(--bg3);
+    border-radius: 8px;
+  }
+
+  /* User avatar in topbar */
+  .user-avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    cursor: pointer;
+    border: none;
+    color: white;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    position: relative;
+  }
+
+  .user-menu {
+    position: absolute;
+    top: 40px; right: 0;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px;
+    min-width: 180px;
+    z-index: 200;
+    display: none;
+    box-shadow: var(--shadow);
+  }
+  .user-menu.show { display: block; }
+  .user-menu-name { font-size: 13px; padding: 4px 8px; margin-bottom: 4px; }
+  .user-menu-email { font-size: 11px; color: var(--text3); padding: 0 8px 8px; border-bottom: 1px solid var(--border); }
+  .user-menu-item {
+    padding: 7px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text2);
+    margin-top: 4px;
+  }
+  .user-menu-item:hover { background: var(--bg3); }
+
+  /* Config banner */
+  .config-banner {
+    background: rgba(245,158,11,0.1);
+    border: 1px solid rgba(245,158,11,0.3);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--yellow);
+    margin-bottom: 16px;
+    display: none;
+  }
+  .config-banner.show { display: block; }
+
+  /* ===== SCROLLBAR ===== */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 3px; }
+
+  /* ===== MOBILE ===== */
+  @media (max-width: 640px) {
+    .sidebar { width: 50px; }
+    .form-row { grid-template-columns: 1fr; }
+    th.hide-mobile, td.hide-mobile { display: none; }
+    .content { padding: 12px; }
+  }
+
+  /* ===== GAS CONFIG ===== */
+  .config-section {
+    background: rgba(99,102,241,0.08);
+    border: 1px solid rgba(99,102,241,0.2);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 16px;
+    font-size: 13px;
+  }
+  .config-section p { color: var(--text2); margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen" class="show">
+  <div class="login-card">
+    <div class="login-logo">🎯</div>
+    <div class="login-title">CRM Pro</div>
+    <div class="login-sub">社内CRMシステム</div>
+
+    <div id="google-signin-btn"></div>
+
+    <div class="login-error" id="login-error">
+      ⚠️ このアカウントはアクセスできません。会社のGoogleアカウントでログインしてください。
+    </div>
+    <div class="login-domain-info" id="login-domain-info">
+      許可ドメイン：設定画面で設定してください
+    </div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">🎯</div>
+  <div class="nav-item active" onclick="showPage('dashboard')" data-page="dashboard">
+    📊<span class="tooltip">ダッシュボード</span>
+  </div>
+  <div class="nav-item" onclick="showPage('contacts')" data-page="contacts">
+    👥<span class="tooltip">顧客管理</span>
+  </div>
+  <div class="nav-item" onclick="showPage('deals')" data-page="deals">
+    💼<span class="tooltip">商談管理</span>
+  </div>
+  <div class="nav-item" onclick="showPage('tasks')" data-page="tasks">
+    ✅<span class="tooltip">タスク</span>
+  </div>
+  <div class="nav-item" onclick="showPage('activities')" data-page="activities">
+    📋<span class="tooltip">活動履歴</span>
+  </div>
+  <div style="flex:1"></div>
+  <div class="nav-item" onclick="showPage('settings')" data-page="settings">
+    ⚙️<span class="tooltip">設定</span>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <h1 id="page-title">ダッシュボード</h1>
+    <div id="topbar-actions"></div>
+    <div style="position:relative">
+      <button class="user-avatar" id="user-avatar-btn" onclick="toggleUserMenu()">?</button>
+      <div class="user-menu" id="user-menu">
+        <div class="user-menu-name" id="user-menu-name">—</div>
+        <div class="user-menu-email" id="user-menu-email">—</div>
+        <div class="user-menu-item" onclick="logout()">🚪 ログアウト</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">顧客数</div>
+          <div class="stat-value stat-blue" id="stat-contacts">—</div>
+          <div class="stat-sub">登録済み顧客</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">進行中商談</div>
+          <div class="stat-value stat-purple" id="stat-deals">—</div>
+          <div class="stat-sub">アクティブ</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">今月売上予測</div>
+          <div class="stat-value stat-green" id="stat-revenue">—</div>
+          <div class="stat-sub">受注見込み合計</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">未完了タスク</div>
+          <div class="stat-value stat-yellow" id="stat-tasks">—</div>
+          <div class="stat-sub">期限管理</div>
+        </div>
+      </div>
+
+      <div class="dashboard-grid">
+        <div class="card">
+          <div class="card-title">商談ファネル</div>
+          <div class="funnel" id="funnel-chart"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">直近のタスク</div>
+          <div id="dashboard-tasks"></div>
+        </div>
+        <div class="card" style="grid-column: 1 / -1">
+          <div class="card-title">最近の活動</div>
+          <div id="dashboard-activities"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTACTS -->
+    <div class="page" id="page-contacts">
+      <div class="search-bar">
+        <input class="search-input" id="contact-search" placeholder="名前・会社名・メールで検索..." oninput="filterContacts()">
+      </div>
+      <div class="filter-tabs">
+        <div class="filter-tab active" onclick="setContactFilter('all', this)">すべて</div>
+        <div class="filter-tab" onclick="setContactFilter('btob', this)">BtoB（法人）</div>
+        <div class="filter-tab" onclick="setContactFilter('btoc', this)">BtoC（個人）</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>名前</th>
+              <th>種別</th>
+              <th class="hide-mobile">会社名</th>
+              <th class="hide-mobile">メール</th>
+              <th>ステータス</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="contacts-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- DEALS -->
+    <div class="page" id="page-deals">
+      <div class="kanban" id="kanban-board"></div>
+    </div>
+
+    <!-- TASKS -->
+    <div class="page" id="page-tasks">
+      <div class="search-bar">
+        <input class="search-input" id="task-search" placeholder="タスクを検索..." oninput="filterTasks()">
+      </div>
+      <div class="filter-tabs">
+        <div class="filter-tab active" onclick="setTaskFilter('all', this)">すべて</div>
+        <div class="filter-tab" onclick="setTaskFilter('pending', this)">未完了</div>
+        <div class="filter-tab" onclick="setTaskFilter('done', this)">完了済み</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th width="30"></th>
+              <th>タスク名</th>
+              <th class="hide-mobile">関連顧客</th>
+              <th>期限</th>
+              <th>優先度</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tasks-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ACTIVITIES -->
+    <div class="page" id="page-activities">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>日時</th>
+              <th>種別</th>
+              <th>顧客</th>
+              <th class="hide-mobile">内容</th>
+              <th class="hide-mobile">担当</th>
+            </tr>
+          </thead>
+          <tbody id="activities-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <div class="config-section">
+        <p>⚠️ GASのデプロイURLを設定してください。設定後、実際のスプレッドシートとデータが連携されます。</p>
+        <div class="form-group">
+          <label class="form-label">GAS WebアプリURL</label>
+          <input class="form-input" id="gas-url" placeholder="https://script.google.com/macros/s/xxxxx/exec" value="">
+        </div>
+        <button class="btn btn-primary" onclick="saveGasUrl()">URLを保存</button>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="card-title">🔐 Google認証設定</div>
+        <div class="form-group" style="margin-top:12px">
+          <label class="form-label">Google OAuthクライアントID</label>
+          <input class="form-input" id="google-client-id" placeholder="xxxxx.apps.googleusercontent.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">許可するドメイン（自社ドメイン）</label>
+          <input class="form-input" id="allowed-domain" placeholder="yourcompany.com">
+          <div style="font-size:11px;color:var(--text3);margin-top:4px">このドメインのGoogleアカウントのみログイン可能になります</div>
+        </div>
+        <button class="btn btn-primary" onclick="saveAuthConfig()">認証設定を保存</button>
+      </div>
+
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="card-title">GASコード（コピーして使用）</div>
+        <p style="font-size:13px; color:var(--text3); margin-bottom:12px">以下のコードをGASにコピーし、「ウェブアプリとしてデプロイ」してください。</p>
+        <pre style="background:var(--bg3); padding:14px; border-radius:8px; font-family:'DM Mono',monospace; font-size:11px; color:var(--text2); overflow-x:auto; white-space:pre-wrap; line-height:1.6" id="gas-code-display"></pre>
+        <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="copyGasCode()">📋 コピー</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-contact">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="modal-contact-title">顧客を追加</span>
+      <button class="modal-close" onclick="closeModal('modal-contact')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">種別</label>
+      <select class="form-select" id="contact-type" onchange="toggleCompanyField()">
+        <option value="btoc">BtoC（個人）</option>
+        <option value="btob">BtoB（法人）</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">名前 *</label>
+        <input class="form-input" id="contact-name" placeholder="例：田中 太郎">
+      </div>
+      <div class="form-group">
+        <label class="form-label">フリガナ</label>
+        <input class="form-input" id="contact-kana" placeholder="タナカ タロウ">
+      </div>
+    </div>
+    <div class="form-group" id="company-field">
+      <label class="form-label">会社名</label>
+      <input class="form-input" id="contact-company" placeholder="株式会社〇〇">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">メール</label>
+        <input class="form-input" id="contact-email" type="email" placeholder="example@email.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">電話番号</label>
+        <input class="form-input" id="contact-phone" placeholder="090-0000-0000">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">ステータス</label>
+        <select class="form-select" id="contact-status">
+          <option value="lead">リード</option>
+          <option value="prospect">見込み</option>
+          <option value="customer">顧客</option>
+          <option value="inactive">休眠</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">担当者</label>
+        <input class="form-input" id="contact-owner" placeholder="担当者名">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">メモ</label>
+      <textarea class="form-textarea" id="contact-memo" placeholder="備考・メモ"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-contact')">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveContact()">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-deal">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="modal-deal-title">商談を追加</span>
+      <button class="modal-close" onclick="closeModal('modal-deal')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">商談名 *</label>
+      <input class="form-input" id="deal-name" placeholder="例：Aプラン導入提案">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">顧客</label>
+        <select class="form-select" id="deal-contact"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">金額（円）</label>
+        <input class="form-input" id="deal-amount" type="number" placeholder="500000">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">ステージ</label>
+        <select class="form-select" id="deal-stage">
+          <option value="lead">リード</option>
+          <option value="proposal">提案中</option>
+          <option value="negotiation">交渉中</option>
+          <option value="won">受注</option>
+          <option value="lost">失注</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">成約予定日</label>
+        <input class="form-input" id="deal-close-date" type="date">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">確度（%）</label>
+      <input class="form-input" id="deal-probability" type="number" min="0" max="100" placeholder="50">
+    </div>
+    <div class="form-group">
+      <label class="form-label">メモ</label>
+      <textarea class="form-textarea" id="deal-memo" placeholder="商談メモ"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-deal')">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveDeal()">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-task">
+  <div class="modal">
+    <div class="modal-title">
+      <span>タスクを追加</span>
+      <button class="modal-close" onclick="closeModal('modal-task')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">タスク名 *</label>
+      <input class="form-input" id="task-name" placeholder="タスクを入力...">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">関連顧客</label>
+        <select class="form-select" id="task-contact">
+          <option value="">なし</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">優先度</label>
+        <select class="form-select" id="task-priority">
+          <option value="low">低</option>
+          <option value="medium">中</option>
+          <option value="high">高</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">期限</label>
+        <input class="form-input" id="task-due" type="date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">担当者</label>
+        <input class="form-input" id="task-owner" placeholder="担当者名">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">メモ</label>
+      <textarea class="form-textarea" id="task-memo" placeholder="詳細メモ"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-task')">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveTask()">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-activity">
+  <div class="modal">
+    <div class="modal-title">
+      <span>活動を記録</span>
+      <button class="modal-close" onclick="closeModal('modal-activity')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">種別</label>
+        <select class="form-select" id="activity-type">
+          <option value="call">📞 電話</option>
+          <option value="email">📧 メール</option>
+          <option value="meeting">🤝 訪問・打合せ</option>
+          <option value="note">📝 メモ</option>
+          <option value="other">その他</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">顧客</label>
+        <select class="form-select" id="activity-contact">
+          <option value="">なし</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">内容 *</label>
+      <textarea class="form-textarea" id="activity-content" placeholder="活動内容を入力..."></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">日時</label>
+        <input class="form-input" id="activity-date" type="datetime-local">
+      </div>
+      <div class="form-group">
+        <label class="form-label">担当者</label>
+        <input class="form-input" id="activity-owner" placeholder="担当者名">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-activity')">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveActivity()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL PANEL -->
+<div class="detail-overlay" id="detail-overlay">
+  <div class="detail-bg" onclick="closeDetail()"></div>
+  <div class="detail-panel" id="detail-panel">
+    <div id="detail-content"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  DATA STORE (LocalStorage + GAS sync)
+// ============================================================
+let db = {
+  contacts: [],
+  deals: [],
+  tasks: [],
+  activities: []
+};
+
+let gasUrl = localStorage.getItem('crm_gas_url') || '';
+let currentContactFilter = 'all';
+let currentTaskFilter = 'all';
+let editingId = null;
+
+// ============================================================
+//  AUTH - Google Sign-In
+// ============================================================
+let currentUser = null;
+let authConfig = {
+  clientId: localStorage.getItem('crm_client_id') || '',
+  allowedDomain: localStorage.getItem('crm_allowed_domain') || ''
+};
+
+function initAuth() {
+  // 設定画面に既存値を反映
+  if (authConfig.clientId) document.getElementById('google-client-id').value = authConfig.clientId;
+  if (authConfig.allowedDomain) {
+    document.getElementById('allowed-domain').value = authConfig.allowedDomain;
+    document.getElementById('login-domain-info').textContent = '許可ドメイン：' + authConfig.allowedDomain;
+  }
+
+  // 既存セッションチェック
+  const saved = sessionStorage.getItem('crm_user');
+  if (saved) {
+    currentUser = JSON.parse(saved);
+    onLoginSuccess(currentUser);
+    return;
+  }
+
+  // クライアントIDが未設定の場合は設定画面へ誘導
+  if (!authConfig.clientId) {
+    showConfigWarning();
+    return;
+  }
+
+  showLoginScreen();
+}
+
+function showLoginScreen() {
+  document.getElementById('login-screen').classList.add('show');
+  document.body.style.overflow = 'hidden';
+
+  // Google Sign-In ボタン初期化
+  if (window.google && authConfig.clientId) {
+    google.accounts.id.initialize({
+      client_id: authConfig.clientId,
+      callback: handleGoogleCredential,
+      auto_select: false,
+    });
+    google.accounts.id.renderButton(
+      document.getElementById('google-signin-btn'),
+      {
+        theme: 'filled_black',
+        size: 'large',
+        width: 280,
+        text: 'signin_with',
+        locale: 'ja'
+      }
+    );
+  } else {
+    // Google GSIスクリプトがまだ読み込まれていない場合
+    setTimeout(showLoginScreen, 500);
+  }
+}
+
+function handleGoogleCredential(response) {
+  const payload = parseJwt(response.credential);
+  const email = payload.email || '';
+  const domain = email.split('@')[1] || '';
+
+  // ドメインチェック
+  if (authConfig.allowedDomain && domain !== authConfig.allowedDomain) {
+    document.getElementById('login-error').style.display = 'block';
+    return;
+  }
+
+  const user = {
+    name: payload.name,
+    email: payload.email,
+    picture: payload.picture,
+    initial: (payload.name || payload.email).charAt(0).toUpperCase()
+  };
+
+  sessionStorage.setItem('crm_user', JSON.stringify(user));
+  onLoginSuccess(user);
+}
+
+function onLoginSuccess(user) {
+  currentUser = user;
+  document.getElementById('login-screen').classList.remove('show');
+  document.body.style.overflow = '';
+
+  // アバター更新
+  const btn = document.getElementById('user-avatar-btn');
+  if (user.picture) {
+    btn.innerHTML = `<img src="${user.picture}" style="width:30px;height:30px;border-radius:50%;object-fit:cover">`;
+  } else {
+    btn.textContent = user.initial;
+  }
+  document.getElementById('user-menu-name').textContent = user.name || '';
+  document.getElementById('user-menu-email').textContent = user.email || '';
+}
+
+function showConfigWarning() {
+  // 認証未設定の場合はデモモードで起動
+  document.getElementById('login-screen').classList.remove('show');
+  const banner = document.createElement('div');
+  banner.className = 'config-banner show';
+  banner.innerHTML = `⚠️ <strong>認証未設定：デモモード</strong>　設定画面でGoogleクライアントIDと許可ドメインを設定してください。`;
+  document.querySelector('.content').prepend(banner);
+
+  // ダミーユーザー
+  onLoginSuccess({ name: 'デモユーザー', email: 'demo@example.com', initial: 'D' });
+}
+
+function logout() {
+  sessionStorage.removeItem('crm_user');
+  currentUser = null;
+  if (window.google && authConfig.clientId) {
+    google.accounts.id.disableAutoSelect();
+  }
+  location.reload();
+}
+
+function toggleUserMenu() {
+  document.getElementById('user-menu').classList.toggle('show');
+}
+
+function saveAuthConfig() {
+  authConfig.clientId = document.getElementById('google-client-id').value.trim();
+  authConfig.allowedDomain = document.getElementById('allowed-domain').value.trim();
+  localStorage.setItem('crm_client_id', authConfig.clientId);
+  localStorage.setItem('crm_allowed_domain', authConfig.allowedDomain);
+  alert('認証設定を保存しました。ページをリロードして動作を確認してください。');
+  location.reload();
+}
+
+function parseJwt(token) {
+  const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+  return JSON.parse(decodeURIComponent(atob(base64).split('').map(c =>
+    '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+  ).join('')));
+}
+
+// 外クリックでユーザーメニューを閉じる
+document.addEventListener('click', e => {
+  const menu = document.getElementById('user-menu');
+  const btn = document.getElementById('user-avatar-btn');
+  if (menu && !menu.contains(e.target) && e.target !== btn) {
+    menu.classList.remove('show');
+  }
+});
+
+// ============================================================
+//  INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  loadFromStorage();
+  initAuth();
+  if (gasUrl) {
+    document.getElementById('gas-url').value = gasUrl;
+    syncFromGas();
+  } else {
+    loadDemoData();
+  }
+  renderAll();
+  setGasCodeDisplay();
+
+  // Set default datetime
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  const local = now.toISOString().slice(0, 16);
+  document.getElementById('activity-date').value = local;
+  document.getElementById('task-due').value = now.toISOString().slice(0, 10);
+});
+
+function loadFromStorage() {
+  ['contacts','deals','tasks','activities'].forEach(k => {
+    const s = localStorage.getItem('crm_' + k);
+    if (s) db[k] = JSON.parse(s);
+  });
+}
+
+function saveToStorage() {
+  ['contacts','deals','tasks','activities'].forEach(k => {
+    localStorage.setItem('crm_' + k, JSON.stringify(db[k]));
+  });
+}
+
+function loadDemoData() {
+  if (db.contacts.length > 0) return;
+  const now = new Date().toISOString();
+  db.contacts = [
+    { id:'c1', type:'btob', name:'山田 花子', kana:'ヤマダ ハナコ', company:'株式会社山田商事', email:'yamada@example.com', phone:'03-1234-5678', status:'customer', owner:'鈴木', memo:'重要顧客', createdAt:now },
+    { id:'c2', type:'btoc', name:'田中 次郎', kana:'タナカ ジロウ', company:'', email:'tanaka@example.com', phone:'090-1111-2222', status:'prospect', owner:'佐藤', memo:'', createdAt:now },
+    { id:'c3', type:'btob', name:'小林 健', kana:'コバヤシ タケル', company:'小林工業株式会社', email:'kobayashi@example.com', phone:'06-9999-0000', status:'lead', owner:'鈴木', memo:'展示会で名刺交換', createdAt:now },
+    { id:'c4', type:'btoc', name:'鈴木 みか', kana:'スズキ ミカ', company:'', email:'suzuki@example.com', phone:'080-3333-4444', status:'customer', owner:'田中', memo:'', createdAt:now },
+  ];
+  db.deals = [
+    { id:'d1', name:'Aプラン導入提案', contactId:'c1', amount:1200000, stage:'proposal', closeDate:'2026-03-31', probability:60, memo:'', createdAt:now },
+    { id:'d2', name:'基本パッケージ', contactId:'c2', amount:350000, stage:'negotiation', closeDate:'2026-02-28', probability:75, memo:'', createdAt:now },
+    { id:'d3', name:'設備メンテナンス契約', contactId:'c3', amount:800000, stage:'lead', closeDate:'2026-04-30', probability:20, memo:'', createdAt:now },
+    { id:'d4', name:'リニューアルプラン', contactId:'c4', amount:500000, stage:'won', closeDate:'2026-01-31', probability:100, memo:'', createdAt:now },
+  ];
+  db.tasks = [
+    { id:'t1', name:'見積書送付', contactId:'c1', priority:'high', dueDate:'2026-02-25', done:false, owner:'鈴木', memo:'', createdAt:now },
+    { id:'t2', name:'電話フォロー', contactId:'c2', priority:'medium', dueDate:'2026-02-28', done:false, owner:'佐藤', memo:'', createdAt:now },
+    { id:'t3', name:'現地調査', contactId:'c3', priority:'low', dueDate:'2026-03-05', done:false, owner:'鈴木', memo:'', createdAt:now },
+    { id:'t4', name:'契約書確認', contactId:'c4', priority:'high', dueDate:'2026-01-15', done:true, owner:'田中', memo:'', createdAt:now },
+  ];
+  db.activities = [
+    { id:'a1', type:'meeting', contactId:'c1', content:'新システム導入についてヒアリング。来週見積もり提出予定。', date:'2026-02-22T10:00', owner:'鈴木', createdAt:now },
+    { id:'a2', type:'call', contactId:'c2', content:'初回コンタクト。興味あり、資料送付済み。', date:'2026-02-21T14:30', owner:'佐藤', createdAt:now },
+    { id:'a3', type:'email', contactId:'c3', content:'展示会お礼メール送付。製品カタログ同封。', date:'2026-02-20T09:00', owner:'鈴木', createdAt:now },
+  ];
+  saveToStorage();
+}
+
+// ============================================================
+//  NAVIGATION
+// ============================================================
+const pageTitles = {
+  dashboard: 'ダッシュボード',
+  contacts: '顧客管理',
+  deals: '商談管理',
+  tasks: 'タスク',
+  activities: '活動履歴',
+  settings: '設定'
+};
+
+const pageActions = {
+  dashboard: '',
+  contacts: '<button class="btn btn-primary btn-sm" onclick="openContactModal()">＋ 顧客追加</button>',
+  deals: '<button class="btn btn-primary btn-sm" onclick="openDealModal()">＋ 商談追加</button>',
+  tasks: '<button class="btn btn-primary btn-sm" onclick="openTaskModal()">＋ タスク追加</button>',
+  activities: '<button class="btn btn-primary btn-sm" onclick="openActivityModal()">＋ 活動記録</button>',
+  settings: ''
+};
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelector(`[data-page="${name}"]`).classList.add('active');
+  document.getElementById('page-title').textContent = pageTitles[name];
+  document.getElementById('topbar-actions').innerHTML = pageActions[name] || '';
+}
+
+// ============================================================
+//  RENDER ALL
+// ============================================================
+function renderAll() {
+  renderDashboard();
+  renderContacts();
+  renderKanban();
+  renderTasks();
+  renderActivities();
+}
+
+// ============================================================
+//  DASHBOARD
+// ============================================================
+function renderDashboard() {
+  const activeDealCount = db.deals.filter(d => !['won','lost'].includes(d.stage)).length;
+  const revenue = db.deals.filter(d => d.stage === 'won').reduce((s,d) => s + (d.amount||0), 0);
+  const pendingTasks = db.tasks.filter(t => !t.done).length;
+
+  document.getElementById('stat-contacts').textContent = db.contacts.length;
+  document.getElementById('stat-deals').textContent = activeDealCount;
+  document.getElementById('stat-revenue').textContent = '¥' + revenue.toLocaleString();
+  document.getElementById('stat-tasks').textContent = pendingTasks;
+
+  // Funnel
+  const stages = [
+    { key:'lead', label:'リード', color:'#6366f1' },
+    { key:'proposal', label:'提案中', color:'#3b82f6' },
+    { key:'negotiation', label:'交渉中', color:'#f59e0b' },
+    { key:'won', label:'受注', color:'#10b981' },
+  ];
+  const total = db.deals.length || 1;
+  const funnelHtml = stages.map(s => {
+    const cnt = db.deals.filter(d => d.stage === s.key).length;
+    const pct = Math.round(cnt / total * 100);
+    return `<div class="funnel-item">
+      <span class="funnel-label">${s.label}</span>
+      <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:${pct}%;background:${s.color}"></div></div>
+      <span class="funnel-count">${cnt}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('funnel-chart').innerHTML = funnelHtml || '<div style="color:var(--text3);font-size:13px">データなし</div>';
+
+  // Tasks
+  const upcomingTasks = db.tasks.filter(t => !t.done).slice(0, 5);
+  const today = new Date().toISOString().slice(0,10);
+  const taskHtml = upcomingTasks.length ? upcomingTasks.map(t => {
+    const contact = db.contacts.find(c => c.id === t.contactId);
+    const overdue = t.dueDate && t.dueDate < today;
+    return `<div class="task-item">
+      <div class="task-check ${t.done?'done':''}" onclick="toggleTask('${t.id}')">✓</div>
+      <div class="task-text">${t.name}${contact?` <span style="color:var(--text3)">・${contact.name}</span>`:''}
+      </div>
+      <div class="task-due ${overdue?'overdue':''}">${t.dueDate||''}</div>
+    </div>`;
+  }).join('') : '<div style="color:var(--text3);font-size:13px;padding:12px 0">タスクなし</div>';
+  document.getElementById('dashboard-tasks').innerHTML = taskHtml;
+
+  // Activities
+  const recentActs = [...db.activities].sort((a,b) => b.date.localeCompare(a.date)).slice(0,5);
+  const typeEmoji = { call:'📞', email:'📧', meeting:'🤝', note:'📝', other:'📌' };
+  const actHtml = recentActs.length ? recentActs.map(a => {
+    const contact = db.contacts.find(c => c.id === a.contactId);
+    return `<div class="activity-item">
+      <div class="activity-dot"></div>
+      <div>
+        <div class="activity-text">${typeEmoji[a.type]||'📌'} ${contact?`<strong>${contact.name}</strong> `:''} ${a.content}</div>
+        <div class="activity-time">${formatDate(a.date)} ${a.owner?'・'+a.owner:''}</div>
+      </div>
+    </div>`;
+  }).join('') : '<div style="color:var(--text3);font-size:13px;padding:12px 0">活動なし</div>';
+  document.getElementById('dashboard-activities').innerHTML = actHtml;
+}
+
+// ============================================================
+//  CONTACTS
+// ============================================================
+function renderContacts(filter) {
+  let contacts = db.contacts;
+  const q = document.getElementById('contact-search')?.value.toLowerCase() || '';
+  if (currentContactFilter !== 'all') contacts = contacts.filter(c => c.type === currentContactFilter);
+  if (q) contacts = contacts.filter(c =>
+    c.name.toLowerCase().includes(q) ||
+    (c.company||'').toLowerCase().includes(q) ||
+    (c.email||'').toLowerCase().includes(q)
+  );
+
+  const statusMap = {
+    lead: ['リード','badge-blue'],
+    prospect: ['見込み','badge-purple'],
+    customer: ['顧客','badge-green'],
+    inactive: ['休眠','badge-gray']
+  };
+
+  const tbody = document.getElementById('contacts-tbody');
+  if (!contacts.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="emoji">👥</div><p>顧客がいません</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = contacts.map(c => {
+    const [sl, sc] = statusMap[c.status] || ['不明','badge-gray'];
+    return `<tr onclick="showContactDetail('${c.id}')" style="cursor:pointer">
+      <td><span class="link-text">${c.name}</span></td>
+      <td><span class="badge ${c.type==='btob'?'badge-blue':'badge-purple'}">${c.type==='btob'?'法人':'個人'}</span></td>
+      <td class="hide-mobile">${c.company||'—'}</td>
+      <td class="hide-mobile">${c.email||'—'}</td>
+      <td><span class="badge ${sc}">${sl}</span></td>
+      <td><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();editContact('${c.id}')">編集</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function setContactFilter(f, el) {
+  currentContactFilter = f;
+  document.querySelectorAll('#page-contacts .filter-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderContacts();
+}
+
+function filterContacts() { renderContacts(); }
+
+// ============================================================
+//  KANBAN (DEALS)
+// ============================================================
+const stages = [
+  { key:'lead', label:'リード', color:'#6366f1' },
+  { key:'proposal', label:'提案中', color:'#3b82f6' },
+  { key:'negotiation', label:'交渉中', color:'#f59e0b' },
+  { key:'won', label:'受注 🎉', color:'#10b981' },
+  { key:'lost', label:'失注', color:'#ef4444' },
+];
+
+function renderKanban() {
+  const board = document.getElementById('kanban-board');
+  board.innerHTML = stages.map(s => {
+    const deals = db.deals.filter(d => d.stage === s.key);
+    const cards = deals.map(d => {
+      const contact = db.contacts.find(c => c.id === d.contactId);
+      return `<div class="deal-card" onclick="showDealDetail('${d.id}')">
+        <div class="deal-name">${d.name}</div>
+        <div class="deal-customer">${contact ? contact.name : '—'}</div>
+        <div class="deal-amount">¥${(d.amount||0).toLocaleString()}</div>
+        <div class="deal-meta">
+          <span>${d.probability||0}%</span>
+          <span>${d.closeDate||''}</span>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="kanban-col">
+      <div class="kanban-col-title">
+        <span style="color:${s.color}">${s.label}</span>
+        <span class="kanban-col-count">${deals.length}</span>
+      </div>
+      ${cards || '<div style="color:var(--text3);font-size:12px;text-align:center;padding:16px 0">なし</div>'}
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+//  TASKS
+// ============================================================
+function renderTasks() {
+  let tasks = db.tasks;
+  const q = document.getElementById('task-search')?.value.toLowerCase() || '';
+  if (currentTaskFilter === 'pending') tasks = tasks.filter(t => !t.done);
+  if (currentTaskFilter === 'done') tasks = tasks.filter(t => t.done);
+  if (q) tasks = tasks.filter(t => t.name.toLowerCase().includes(q));
+
+  const today = new Date().toISOString().slice(0,10);
+  const prioMap = { high:['高','badge-red'], medium:['中','badge-yellow'], low:['低','badge-gray'] };
+  const tbody = document.getElementById('tasks-tbody');
+  if (!tasks.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="emoji">✅</div><p>タスクがありません</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = tasks.map(t => {
+    const contact = db.contacts.find(c => c.id === t.contactId);
+    const overdue = t.dueDate && t.dueDate < today && !t.done;
+    const [pl, pc] = prioMap[t.priority] || ['—','badge-gray'];
+    return `<tr>
+      <td><div class="task-check ${t.done?'done':''}" onclick="toggleTask('${t.id}')">✓</div></td>
+      <td><span class="${t.done?'':'link-text'}" style="${t.done?'text-decoration:line-through;color:var(--text3)':''}">${t.name}</span></td>
+      <td class="hide-mobile">${contact ? contact.name : '—'}</td>
+      <td><span class="${overdue?'badge badge-red':''}">${t.dueDate||'—'}</span></td>
+      <td><span class="badge ${pc}">${pl}</span></td>
+      <td><button class="btn btn-ghost btn-sm" onclick="deleteItem('tasks','${t.id}')">削除</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function setTaskFilter(f, el) {
+  currentTaskFilter = f;
+  document.querySelectorAll('#page-tasks .filter-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderTasks();
+}
+
+function filterTasks() { renderTasks(); }
+
+function toggleTask(id) {
+  const task = db.tasks.find(t => t.id === id);
+  if (task) {
+    task.done = !task.done;
+    saveToStorage();
+    renderAll();
+    syncToGas('tasks', task);
+  }
+}
+
+// ============================================================
+//  ACTIVITIES
+// ============================================================
+function renderActivities() {
+  const typeEmoji = { call:'📞 電話', email:'📧 メール', meeting:'🤝 打合せ', note:'📝 メモ', other:'📌 その他' };
+  const tbody = document.getElementById('activities-tbody');
+  const acts = [...db.activities].sort((a,b) => b.date.localeCompare(a.date));
+  if (!acts.length) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="emoji">📋</div><p>活動履歴がありません</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = acts.map(a => {
+    const contact = db.contacts.find(c => c.id === a.contactId);
+    return `<tr>
+      <td style="white-space:nowrap">${formatDate(a.date)}</td>
+      <td>${typeEmoji[a.type]||a.type}</td>
+      <td>${contact ? contact.name : '—'}</td>
+      <td class="hide-mobile" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.content}</td>
+      <td class="hide-mobile">${a.owner||'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ============================================================
+//  DETAIL PANELS
+// ============================================================
+function showContactDetail(id) {
+  const c = db.contacts.find(x => x.id === id);
+  if (!c) return;
+  const deals = db.deals.filter(d => d.contactId === id);
+  const tasks = db.tasks.filter(t => t.contactId === id && !t.done);
+  const acts = db.activities.filter(a => a.contactId === id);
+
+  const statusMap = { lead:'リード', prospect:'見込み', customer:'顧客', inactive:'休眠' };
+
+  document.getElementById('detail-content').innerHTML = `
+    <div class="detail-header">
+      <div class="detail-avatar">${c.type==='btob'?'🏢':'👤'}</div>
+      <div>
+        <div class="detail-name">${c.name}</div>
+        <div class="detail-sub">${c.type==='btob'?'法人':'個人'}${c.company?' ・ '+c.company:''}</div>
+      </div>
+      <button class="modal-close detail-close" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="detail-body">
+      <div class="detail-section">
+        <div class="detail-section-title">基本情報</div>
+        ${field('ステータス', statusMap[c.status]||c.status)}
+        ${field('メール', c.email||'—')}
+        ${field('電話', c.phone||'—')}
+        ${field('担当者', c.owner||'—')}
+        ${c.memo ? field('メモ', c.memo) : ''}
+      </div>
+      ${deals.length ? `<div class="detail-section">
+        <div class="detail-section-title">関連商談 (${deals.length})</div>
+        ${deals.map(d => `<div class="task-item"><span class="link-text" onclick="showDealDetail('${d.id}')">${d.name}</span><span style="font-family:'DM Mono',monospace;font-size:12px">¥${(d.amount||0).toLocaleString()}</span></div>`).join('')}
+      </div>` : ''}
+      ${tasks.length ? `<div class="detail-section">
+        <div class="detail-section-title">未完了タスク (${tasks.length})</div>
+        ${tasks.map(t => `<div class="task-item"><div class="task-check" onclick="toggleTask('${t.id}')">✓</div><span>${t.name}</span><span class="task-due">${t.dueDate||''}</span></div>`).join('')}
+      </div>` : ''}
+      ${acts.length ? `<div class="detail-section">
+        <div class="detail-section-title">活動履歴 (${acts.length})</div>
+        ${acts.slice(0,5).map(a => `<div class="activity-item"><div class="activity-dot"></div><div><div class="activity-text">${a.content}</div><div class="activity-time">${formatDate(a.date)}</div></div></div>`).join('')}
+      </div>` : ''}
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="btn btn-ghost btn-sm" onclick="editContact('${c.id}');closeDetail()">編集</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteItem('contacts','${c.id}');closeDetail()">削除</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('detail-overlay').classList.add('show');
+}
+
+function showDealDetail(id) {
+  const d = db.deals.find(x => x.id === id);
+  if (!d) return;
+  const contact = db.contacts.find(c => c.id === d.contactId);
+  const stageLabel = stages.find(s => s.key === d.stage)?.label || d.stage;
+  document.getElementById('detail-content').innerHTML = `
+    <div class="detail-header">
+      <div class="detail-avatar">💼</div>
+      <div>
+        <div class="detail-name">${d.name}</div>
+        <div class="detail-sub">${contact ? contact.name : '—'}</div>
+      </div>
+      <button class="modal-close detail-close" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="detail-body">
+      <div class="detail-section">
+        <div class="detail-section-title">商談情報</div>
+        ${field('金額', '¥' + (d.amount||0).toLocaleString())}
+        ${field('ステージ', stageLabel)}
+        ${field('確度', (d.probability||0) + '%')}
+        ${field('成約予定日', d.closeDate||'—')}
+        ${field('顧客', contact ? contact.name : '—')}
+        ${d.memo ? field('メモ', d.memo) : ''}
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="btn btn-ghost btn-sm" onclick="editDeal('${d.id}');closeDetail()">編集</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteItem('deals','${d.id}');closeDetail()">削除</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('detail-overlay').classList.add('show');
+}
+
+function field(label, value) {
+  return `<div class="detail-field"><span class="detail-field-label">${label}</span><span class="detail-field-value">${value}</span></div>`;
+}
+
+function closeDetail() {
+  document.getElementById('detail-overlay').classList.remove('show');
+}
+
+// ============================================================
+//  MODALS
+// ============================================================
+function openContactModal() {
+  editingId = null;
+  document.getElementById('modal-contact-title').textContent = '顧客を追加';
+  ['contact-name','contact-kana','contact-company','contact-email','contact-phone','contact-owner','contact-memo'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('contact-type').value = 'btoc';
+  document.getElementById('contact-status').value = 'lead';
+  toggleCompanyField();
+  document.getElementById('modal-contact').classList.add('show');
+}
+
+function editContact(id) {
+  const c = db.contacts.find(x => x.id === id);
+  if (!c) return;
+  editingId = id;
+  document.getElementById('modal-contact-title').textContent = '顧客を編集';
+  document.getElementById('contact-type').value = c.type;
+  document.getElementById('contact-name').value = c.name;
+  document.getElementById('contact-kana').value = c.kana || '';
+  document.getElementById('contact-company').value = c.company || '';
+  document.getElementById('contact-email').value = c.email || '';
+  document.getElementById('contact-phone').value = c.phone || '';
+  document.getElementById('contact-status').value = c.status;
+  document.getElementById('contact-owner').value = c.owner || '';
+  document.getElementById('contact-memo').value = c.memo || '';
+  toggleCompanyField();
+  document.getElementById('modal-contact').classList.add('show');
+}
+
+function saveContact() {
+  const name = document.getElementById('contact-name').value.trim();
+  if (!name) { alert('名前は必須です'); return; }
+  const data = {
+    type: document.getElementById('contact-type').value,
+    name, kana: document.getElementById('contact-kana').value,
+    company: document.getElementById('contact-company').value,
+    email: document.getElementById('contact-email').value,
+    phone: document.getElementById('contact-phone').value,
+    status: document.getElementById('contact-status').value,
+    owner: document.getElementById('contact-owner').value,
+    memo: document.getElementById('contact-memo').value,
+  };
+  if (editingId) {
+    Object.assign(db.contacts.find(c => c.id === editingId), data);
+  } else {
+    data.id = 'c' + Date.now();
+    data.createdAt = new Date().toISOString();
+    db.contacts.push(data);
+  }
+  saveToStorage();
+  renderAll();
+  closeModal('modal-contact');
+  syncToGas('contacts', data);
+}
+
+function toggleCompanyField() {
+  const type = document.getElementById('contact-type').value;
+  document.getElementById('company-field').style.display = type === 'btob' ? 'block' : 'none';
+}
+
+function openDealModal() {
+  editingId = null;
+  document.getElementById('modal-deal-title').textContent = '商談を追加';
+  ['deal-name','deal-amount','deal-memo'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('deal-stage').value = 'proposal';
+  document.getElementById('deal-probability').value = '50';
+  document.getElementById('deal-close-date').value = '';
+  populateContactSelect('deal-contact');
+  document.getElementById('modal-deal').classList.add('show');
+}
+
+function editDeal(id) {
+  const d = db.deals.find(x => x.id === id);
+  if (!d) return;
+  editingId = id;
+  document.getElementById('modal-deal-title').textContent = '商談を編集';
+  populateContactSelect('deal-contact', d.contactId);
+  document.getElementById('deal-name').value = d.name;
+  document.getElementById('deal-amount').value = d.amount || '';
+  document.getElementById('deal-stage').value = d.stage;
+  document.getElementById('deal-close-date').value = d.closeDate || '';
+  document.getElementById('deal-probability').value = d.probability || 50;
+  document.getElementById('deal-memo').value = d.memo || '';
+  document.getElementById('modal-deal').classList.add('show');
+}
+
+function saveDeal() {
+  const name = document.getElementById('deal-name').value.trim();
+  if (!name) { alert('商談名は必須です'); return; }
+  const data = {
+    name,
+    contactId: document.getElementById('deal-contact').value,
+    amount: parseInt(document.getElementById('deal-amount').value) || 0,
+    stage: document.getElementById('deal-stage').value,
+    closeDate: document.getElementById('deal-close-date').value,
+    probability: parseInt(document.getElementById('deal-probability').value) || 0,
+    memo: document.getElementById('deal-memo').value,
+  };
+  if (editingId) {
+    Object.assign(db.deals.find(d => d.id === editingId), data);
+  } else {
+    data.id = 'd' + Date.now();
+    data.createdAt = new Date().toISOString();
+    db.deals.push(data);
+  }
+  saveToStorage();
+  renderAll();
+  closeModal('modal-deal');
+  syncToGas('deals', data);
+}
+
+function openTaskModal() {
+  ['task-name','task-owner','task-memo'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('task-priority').value = 'medium';
+  document.getElementById('task-due').value = new Date().toISOString().slice(0,10);
+  populateContactSelect('task-contact', null, true);
+  document.getElementById('modal-task').classList.add('show');
+}
+
+function saveTask() {
+  const name = document.getElementById('task-name').value.trim();
+  if (!name) { alert('タスク名は必須です'); return; }
+  const data = {
+    id: 't' + Date.now(),
+    name,
+    contactId: document.getElementById('task-contact').value,
+    priority: document.getElementById('task-priority').value,
+    dueDate: document.getElementById('task-due').value,
+    owner: document.getElementById('task-owner').value,
+    memo: document.getElementById('task-memo').value,
+    done: false,
+    createdAt: new Date().toISOString()
+  };
+  db.tasks.push(data);
+  saveToStorage();
+  renderAll();
+  closeModal('modal-task');
+  syncToGas('tasks', data);
+}
+
+function openActivityModal() {
+  ['activity-content','activity-owner'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('activity-type').value = 'call';
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  document.getElementById('activity-date').value = now.toISOString().slice(0,16);
+  populateContactSelect('activity-contact', null, true);
+  document.getElementById('modal-activity').classList.add('show');
+}
+
+function saveActivity() {
+  const content = document.getElementById('activity-content').value.trim();
+  if (!content) { alert('内容は必須です'); return; }
+  const data = {
+    id: 'a' + Date.now(),
+    type: document.getElementById('activity-type').value,
+    contactId: document.getElementById('activity-contact').value,
+    content,
+    date: document.getElementById('activity-date').value,
+    owner: document.getElementById('activity-owner').value,
+    createdAt: new Date().toISOString()
+  };
+  db.activities.push(data);
+  saveToStorage();
+  renderAll();
+  closeModal('modal-activity');
+  syncToGas('activities', data);
+}
+
+function populateContactSelect(selectId, selectedId = null, includeNone = false) {
+  const el = document.getElementById(selectId);
+  const opts = includeNone ? '<option value="">なし</option>' : '';
+  el.innerHTML = opts + db.contacts.map(c =>
+    `<option value="${c.id}" ${c.id === selectedId ? 'selected' : ''}>${c.name}</option>`
+  ).join('');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+  editingId = null;
+}
+
+function deleteItem(collection, id) {
+  if (!confirm('削除してよろしいですか？')) return;
+  db[collection] = db[collection].filter(x => x.id !== id);
+  saveToStorage();
+  renderAll();
+}
+
+// ============================================================
+//  GAS SYNC
+// ============================================================
+function saveGasUrl() {
+  gasUrl = document.getElementById('gas-url').value.trim();
+  localStorage.setItem('crm_gas_url', gasUrl);
+  alert('URLを保存しました。GASからデータを読み込みます。');
+  syncFromGas();
+}
+
+async function syncFromGas() {
+  if (!gasUrl) return;
+  try {
+    const res = await fetch(gasUrl + '?action=getAll');
+    const data = await res.json();
+    if (data.contacts) db.contacts = data.contacts;
+    if (data.deals) db.deals = data.deals;
+    if (data.tasks) db.tasks = data.tasks;
+    if (data.activities) db.activities = data.activities;
+    saveToStorage();
+    renderAll();
+  } catch (e) {
+    console.log('GAS sync error:', e);
+  }
+}
+
+async function syncToGas(sheet, record) {
+  if (!gasUrl) return;
+  try {
+    await fetch(gasUrl, {
+      method: 'POST',
+      body: JSON.stringify({ sheet, record }),
+      headers: { 'Content-Type': 'text/plain' }
+    });
+  } catch(e) { console.log('GAS write error', e); }
+}
+
+// ============================================================
+//  SETTINGS - GAS CODE
+// ============================================================
+function setGasCodeDisplay() {
+  const code = `// CRM Pro - GAS バックエンド
+// スプレッドシートに「Contacts」「Deals」「Tasks」「Activities」シートを作成してください
+
+const SHEETS = ['Contacts', 'Deals', 'Tasks', 'Activities'];
+const HEADERS = {
+  Contacts: ['id','type','name','kana','company','email','phone','status','owner','memo','createdAt'],
+  Deals: ['id','name','contactId','amount','stage','closeDate','probability','memo','createdAt'],
+  Tasks: ['id','name','contactId','priority','dueDate','done','owner','memo','createdAt'],
+  Activities: ['id','type','contactId','content','date','owner','createdAt']
+};
+
+function doGet(e) {
+  const action = e.parameter.action;
+  if (action === 'getAll') {
+    const result = {};
+    SHEETS.forEach(name => {
+      result[name.toLowerCase()] = getSheetData(name);
+    });
+    return json(result);
+  }
+  return json({ error: 'unknown action' });
+}
+
+function doPost(e) {
+  const body = JSON.parse(e.postData.contents);
+  const sheetName = capitalize(body.sheet);
+  const record = body.record;
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+  if (!sheet) return json({ error: 'sheet not found' });
+
+  const headers = HEADERS[sheetName];
+  const existing = getSheetData(sheetName);
+  const idx = existing.findIndex(r => r.id === record.id);
+
+  if (idx >= 0) {
+    // Update
+    const row = idx + 2;
+    headers.forEach((h, i) => {
+      sheet.getRange(row, i + 1).setValue(record[h] !== undefined ? record[h] : '');
+    });
+  } else {
+    // Insert
+    const row = headers.map(h => record[h] !== undefined ? record[h] : '');
+    sheet.appendRow(row);
+  }
+  return json({ result: 'ok' });
+}
+
+function getSheetData(name) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(name);
+  if (!sheet) {
+    sheet = ss.insertSheet(name);
+    sheet.appendRow(HEADERS[name]);
+    return [];
+  }
+  const data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return [];
+  const headers = data[0];
+  return data.slice(1).map(row => {
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = row[i]);
+    return obj;
+  });
+}
+
+function json(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function capitalize(s) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}`;
+  document.getElementById('gas-code-display').textContent = code;
+}
+
+function copyGasCode() {
+  const code = document.getElementById('gas-code-display').textContent;
+  navigator.clipboard.writeText(code).then(() => alert('コードをコピーしました！'));
+}
+
+// ============================================================
+//  UTILS
+// ============================================================
+function formatDate(dt) {
+  if (!dt) return '';
+  const d = new Date(dt);
+  return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+// Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => {
+    if (e.target === el) el.classList.remove('show');
+  });
+});
+</script>
+</body>
+</html>
